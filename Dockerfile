@@ -25,8 +25,10 @@ ENV CMAKE_BUILD_PARALLEL_LEVEL=8
 RUN apt-get update && apt-get install -y \
     python3.12 \
     python3.12-venv \
+    python3-pip \
     git \
     wget \
+    curl \
     libgl1 \
     libglib2.0-0 \
     libsm6 \
@@ -57,9 +59,15 @@ WORKDIR /app
 # Install Python runtime dependencies for the handler
 RUN uv pip install runpod requests websocket-client
 
-# Prevent pip from asking for confirmation during uninstall steps in custom nodes
-ENV PIP_NO_INPUT=1
+# Install MLX and verify installation
+RUN uv pip install --no-cache "mlx[cuda]==0.32.0" \
+    && python -c 'import mlx.core as mx; print("MLX:", mx.__version__)'
 
+# Install mflux and verify installation    
+RUN uv pip install --no-cache \
+    "mflux @ git+https://github.com/mflux-community/mflux.git@main" \
+    && python -c \
+    'from importlib.metadata import version; print("mflux:", version("mflux"))'
 
 
 # Copy your handler code
